@@ -29,14 +29,35 @@ unavailable.
 │  Deterministic hazard engine     │
 │  Local sensor fusion             │
 │  Belt command generation         │
+│  LTE Cat-M1 cellular modem      │  ← Advisory uplink (non-safety)
 └──────────┬───────────────────────┘
            │ BLE (haptic channel)
            ▼
 ┌──────────────────────────────────┐
-│  360 Haptic Belt  (ESP32)        │  ← Haptic output device
-│  Motor driver array              │
+│  360 Haptic Belt  (ESP32-S3)     │  ← Haptic output device
+│  Motor driver array + IMU        │
 └──────────────────────────────────┘
 ```
+
+### Cellular Connectivity (Non-Safety)
+
+The cane includes a SIM7080G LTE Cat-M1/NB-IoT cellular modem with a
+multi-carrier nano-SIM supporting **T-Mobile**, **AT&T**, and **Verizon**.
+This allows the cane to reach RynnBrain cloud services for advisory
+perception without requiring a paired phone.
+
+```
+┌─────────────────────┐     LTE Cat-M1     ┌──────────────┐
+│  SIM7080G Modem     │ ◄─────────────────► │  Cell Tower   │
+│  (on cane, UART2)   │   T-Mobile/ATT/VZW  │  ──► Cloud   │
+└─────────────────────┘                     └──────────────┘
+         │                                         │
+    NON-SAFETY                              RynnBrain API
+    advisory only                           (advisory only)
+```
+
+**Key rule:** Cellular is advisory-only. If the SIM has no signal or
+the modem fails, the cane continues with full local hazard detection.
 
 ## Core Design Rules
 
@@ -55,14 +76,16 @@ unavailable.
    RynnBrain service is unavailable the cane and belt continue to operate
    with full hazard-detection capability.
 
-## Cane Sensor Suite
+## Cane Sensor & Connectivity Suite
 
-| Sensor | Bus | Purpose |
-|--------|-----|---------|
+| Component | Bus | Purpose |
+|-----------|-----|---------|
 | 4× VL53L5CX ToF | I²C (multiplexed) | Near-field 8×8 zone ranging in 4 quadrants |
-| 1× TFmini-S LiDAR | UART | Forward long-range distance |
+| 1× TFmini-S LiDAR | UART1 | Forward long-range distance |
 | 1× VL53L1X downward ToF | I²C | Drop-off / stair detection |
 | BNO086 IMU | I²C | Orientation, step detection, tilt |
+| SIM7080G Cellular Modem | UART2 | LTE Cat-M1/NB-IoT advisory uplink (non-safety) |
+| Nano-SIM Slot | — | Multi-carrier: T-Mobile, AT&T, Verizon |
 
 ## Communication Protocol
 
@@ -96,6 +119,8 @@ JSON-encoded advisory messages (max 200 bytes):
 | Failure | Cane Behaviour | Belt Behaviour |
 |---------|---------------|----------------|
 | Phone disconnects | Advisory hints stop; hazard engine unaffected | Unchanged |
+| Cellular signal lost | Cell advisory stops; BLE advisory still active if phone paired | Unchanged |
+| SIM not inserted | Cellular module stays OFF; BLE/phone advisory only | Unchanged |
 | RynnBrain timeout | Advisory channel marked stale; ignored | Unchanged |
 | Belt disconnects | Cane switches to audio/vibration-on-handle alerts | N/A |
 | Single ToF sensor fails | Quadrant marked degraded; remaining sensors active | Reduced haptic in that quadrant |

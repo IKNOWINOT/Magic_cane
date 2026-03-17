@@ -58,3 +58,20 @@ enum class AdvisoryType : uint8_t {
 #define HAPTIC_CHAR_UUID         "a1b2c3d4-0002-1000-8000-00805f9b34fb"
 #define ADVISORY_SERVICE_UUID    "a1b2c3d4-0003-1000-8000-00805f9b34fb"
 #define ADVISORY_CHAR_UUID       "a1b2c3d4-0004-1000-8000-00805f9b34fb"
+
+/* ── Cellular modem (SIM7080G – LTE Cat-M1/NB-IoT) ─────────────────── */
+/* Supports T-Mobile, AT&T, Verizon via multi-band nano-SIM.            */
+/* NON-SAFETY: advisory channel only — cane works fully without cell.   */
+static constexpr uint32_t CELL_STATUS_INTERVAL_MS   = 10000; /* 10 s  */
+static constexpr uint32_t CELL_CMD_TIMEOUT_MS        = 3000; /* 3 s   */
+static constexpr uint32_t CELL_RETRY_INTERVAL_MS     = 30000;/* 30 s  */
+static constexpr uint32_t CELL_BAUD_RATE             = 115200;
+
+/* UART2 pins to cellular modem */
+static constexpr uint8_t  CELL_UART_RX_PIN = 44;
+static constexpr uint8_t  CELL_UART_TX_PIN = 43;
+static constexpr uint8_t  CELL_RST_PIN     = 38;  /* modem hardware reset */
+static constexpr uint8_t  CELL_PWR_PIN     = 39;  /* modem power key      */
+
+/* RynnBrain cloud advisory endpoint (non-safety) */
+#define CELL_RYNNBRAIN_ENDPOINT  "https://api.rynnbrain.local/v1"

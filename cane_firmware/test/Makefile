@@ -13,7 +13,8 @@ TESTDIR   := test_hazard
 
 SOURCES   := $(TESTDIR)/test_main.cpp \
              $(SRCDIR)/hazard_engine.cpp \
-             $(SRCDIR)/haptic_mapper.cpp
+             $(SRCDIR)/haptic_mapper.cpp \
+             $(SRCDIR)/cell_modem.cpp
 
 TARGET    := test_runner
 

@@ -1,0 +1,60 @@
+name: CI – Native Tests
+
+on:
+  push:
+    branches: [main, copilot/**]
+  pull_request:
+    branches: [main]
+
+jobs:
+  cane-tests:
+    name: Cane Firmware – Host Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install g++
+        run: sudo apt-get update && sudo apt-get install -y g++
+
+      - name: Build & run hazard/haptic tests
+        working-directory: cane_firmware/test
+        run: make test
+
+  belt-tests:
+    name: Belt Firmware – Host Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install g++
+        run: sudo apt-get update && sudo apt-get install -y g++
+
+      - name: Build & run belt protocol tests
+        working-directory: belt_firmware/test
+        run: make test
+
+  companion-tests:
+    name: Companion – Python Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Run protocol & bridge tests
+        working-directory: companion
+        run: python -m pytest tests/ -v
+
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check C++ formatting (advisory)
+        run: |
+          find cane_firmware belt_firmware -name '*.cpp' -o -name '*.h' | head -20 | \
+            xargs clang-format --dry-run --Werror 2>&1 || echo "::warning::Formatting differences found (advisory)"
+        continue-on-error: true

@@ -5,8 +5,9 @@
  *   1. Poll sensors
  *   2. Evaluate hazards (local, deterministic)
  *   3. Build haptic packet and send to belt
- *   4. Optionally overlay advisory hints (non-safety)
- *   5. Pet the watchdog
+ *   4. Optionally overlay advisory hints (non-safety, BLE or cellular)
+ *   5. Poll cellular modem (non-safety advisory uplink)
+ *   6. Pet the watchdog
  *
  * Copyright 2024 Magic Cane Contributors – Apache-2.0
  */
@@ -20,6 +21,7 @@
 #include "haptic_mapper.h"
 #include "belt_link.h"
 #include "advisory_link.h"
+#include "cell_modem.h"
 
 #include <esp_task_wdt.h>
 
@@ -51,7 +53,7 @@ static void status_led_update()
 void setup()
 {
     Serial.begin(115200);
-    Serial.println("\n=== Magic Cane v0.1 ===");
+    Serial.println("\n=== Magic Cane v0.2 ===");
 
     pinMode(LED_PIN, OUTPUT);
     digitalWrite(LED_PIN, LOW);
@@ -59,6 +61,7 @@ void setup()
     sensors_init();
     belt_link_init();
     advisory_link_init();
+    cell_modem_init();
 
     /* Enable hardware watchdog – resets MCU if loop stalls */
     esp_task_wdt_init(WATCHDOG_TIMEOUT_MS / 1000, true);
@@ -88,25 +91,34 @@ void loop()
         belt_link_send(pkt);
     }
 
-    /* ── 4. Check advisory channel (non-safety) ─────────────────────── */
+    /* ── 4. Check advisory channels (non-safety): BLE + cellular ────── */
     advisory_link_poll();
     if (advisory_link_connected() && advisory_link_fresh(now)) {
         AdvisoryHint hint;
         if (advisory_get_latest(hint)) {
-            /* Log to serial for debugging; in production this would
-               drive a bone-conduction speaker or secondary haptic cue. */
-            Serial.printf("[ADV] %s bearing=%d conf=%.2f\n",
+            Serial.printf("[ADV-BLE] %s bearing=%d conf=%.2f\n",
                           hint.label, hint.bearing_deg, hint.confidence);
         }
     }
 
-    /* ── 5. Graceful degradation checks ─────────────────────────────── */
+    /* ── 5. Poll cellular modem (non-safety advisory uplink) ────────── */
+    cell_modem_poll();
+    if (cell_modem_data_ready()) {
+        /* Check for incoming advisory responses from RynnBrain cloud */
+        char cell_buf[256];
+        if (cell_recv_advisory_response(cell_buf, sizeof(cell_buf))) {
+            Serial.printf("[ADV-CELL] %s\n", cell_buf);
+        }
+    }
+
+    /* ── 6. Graceful degradation checks ─────────────────────────────── */
     if (!belt_link_connected()) {
         /* Belt lost – could activate on-handle vibration motor or buzzer.
            For now we log and let the status LED indicate the issue. */
     }
+    /* Cellular down is fine – advisory only, no safety impact */
 
-    /* ── 6. Status LED & watchdog ───────────────────────────────────── */
+    /* ── 7. Status LED & watchdog ───────────────────────────────────── */
     status_led_update();
     esp_task_wdt_reset();
 }

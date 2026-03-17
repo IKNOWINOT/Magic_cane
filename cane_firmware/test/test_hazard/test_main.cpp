@@ -14,6 +14,7 @@
 
 #include "hazard_engine.h"
 #include "haptic_mapper.h"
+#include "cell_modem.h"
 
 #include <cstdio>
 #include <cstdlib>
@@ -985,6 +986,147 @@ static bool test_integration_estop_propagates_to_belt()
 }
 
 /* ===================================================================
+ * Cellular Modem AT Parser Tests
+ * =================================================================== */
+
+static bool test_cell_csq_good_signal()
+{
+    int8_t rssi; uint8_t pct;
+    TEST_ASSERT(cell_parse_csq("+CSQ: 18,0", &rssi, &pct));
+    TEST_ASSERT(rssi == -77);       /* -113 + 18*2 = -77 */
+    TEST_ASSERT(pct >= 55 && pct <= 60);    /* ~58% */
+    return true;
+}
+
+static bool test_cell_csq_no_signal()
+{
+    int8_t rssi; uint8_t pct;
+    TEST_ASSERT(cell_parse_csq("+CSQ: 99,99", &rssi, &pct));
+    TEST_ASSERT(rssi == -120);
+    TEST_ASSERT(pct == 0);
+    return true;
+}
+
+static bool test_cell_csq_max_signal()
+{
+    int8_t rssi; uint8_t pct;
+    TEST_ASSERT(cell_parse_csq("+CSQ: 31,0", &rssi, &pct));
+    TEST_ASSERT(rssi == -51);       /* -113 + 31*2 = -51 */
+    TEST_ASSERT(pct == 100);
+    return true;
+}
+
+static bool test_cell_csq_unknown_99()
+{
+    int8_t rssi; uint8_t pct;
+    TEST_ASSERT(cell_parse_csq("+CSQ: 99,0", &rssi, &pct));
+    TEST_ASSERT(pct == 0);
+    return true;
+}
+
+static bool test_cell_csq_invalid_string()
+{
+    int8_t rssi; uint8_t pct;
+    TEST_ASSERT(!cell_parse_csq("GARBAGE", &rssi, &pct));
+    return true;
+}
+
+static bool test_cell_csq_zero()
+{
+    int8_t rssi; uint8_t pct;
+    TEST_ASSERT(cell_parse_csq("+CSQ: 0,0", &rssi, &pct));
+    TEST_ASSERT(rssi == -113);
+    TEST_ASSERT(pct == 0);
+    return true;
+}
+
+static bool test_cell_cops_tmobile()
+{
+    char name[24];
+    TEST_ASSERT(cell_parse_cops("+COPS: 0,0,\"T-Mobile\",7", name, sizeof(name)));
+    TEST_ASSERT(strcmp(name, "T-Mobile") == 0);
+    return true;
+}
+
+static bool test_cell_cops_att()
+{
+    char name[24];
+    TEST_ASSERT(cell_parse_cops("+COPS: 0,0,\"AT&T\",7", name, sizeof(name)));
+    TEST_ASSERT(strcmp(name, "AT&T") == 0);
+    return true;
+}
+
+static bool test_cell_cops_verizon()
+{
+    char name[24];
+    TEST_ASSERT(cell_parse_cops("+COPS: 0,0,\"Verizon\",7", name, sizeof(name)));
+    TEST_ASSERT(strcmp(name, "Verizon") == 0);
+    return true;
+}
+
+static bool test_cell_cops_no_quotes()
+{
+    char name[24];
+    TEST_ASSERT(!cell_parse_cops("+COPS: 0,0,NoQuotes,7", name, sizeof(name)));
+    return true;
+}
+
+static bool test_cell_cops_long_name()
+{
+    char name[8];   /* intentionally short buffer */
+    TEST_ASSERT(cell_parse_cops("+COPS: 0,0,\"VeryLongOperatorName\",7", name, sizeof(name)));
+    TEST_ASSERT(strlen(name) == 7);     /* truncated to max_len - 1 */
+    return true;
+}
+
+static bool test_cell_reg_home()
+{
+    bool reg;
+    TEST_ASSERT(cell_parse_registration("+CREG: 0,1", &reg));
+    TEST_ASSERT(reg == true);
+    return true;
+}
+
+static bool test_cell_reg_roaming()
+{
+    bool reg;
+    TEST_ASSERT(cell_parse_registration("+CREG: 0,5", &reg));
+    TEST_ASSERT(reg == true);
+    return true;
+}
+
+static bool test_cell_reg_searching()
+{
+    bool reg;
+    TEST_ASSERT(cell_parse_registration("+CREG: 0,2", &reg));
+    TEST_ASSERT(reg == false);
+    return true;
+}
+
+static bool test_cell_reg_denied()
+{
+    bool reg;
+    TEST_ASSERT(cell_parse_registration("+CREG: 0,3", &reg));
+    TEST_ASSERT(reg == false);
+    return true;
+}
+
+static bool test_cell_reg_cereg()
+{
+    bool reg;
+    TEST_ASSERT(cell_parse_registration("+CEREG: 0,1", &reg));
+    TEST_ASSERT(reg == true);
+    return true;
+}
+
+static bool test_cell_reg_invalid()
+{
+    bool reg;
+    TEST_ASSERT(!cell_parse_registration("GARBAGE", &reg));
+    return true;
+}
+
+/* ===================================================================
  * main – run all tests
  * =================================================================== */
 
@@ -1095,6 +1237,30 @@ int main()
     RUN_TEST(test_integration_forward_lidar_pipeline);
     RUN_TEST(test_integration_multi_hazard_pipeline);
     RUN_TEST(test_integration_estop_propagates_to_belt);
+
+    /* ── Cellular Modem AT Parser Tests ────────────────────────────── */
+    std::printf("\n--- Cellular Modem: CSQ Parsing ---\n");
+    RUN_TEST(test_cell_csq_good_signal);
+    RUN_TEST(test_cell_csq_no_signal);
+    RUN_TEST(test_cell_csq_max_signal);
+    RUN_TEST(test_cell_csq_unknown_99);
+    RUN_TEST(test_cell_csq_invalid_string);
+    RUN_TEST(test_cell_csq_zero);
+
+    std::printf("\n--- Cellular Modem: COPS Parsing ---\n");
+    RUN_TEST(test_cell_cops_tmobile);
+    RUN_TEST(test_cell_cops_att);
+    RUN_TEST(test_cell_cops_verizon);
+    RUN_TEST(test_cell_cops_no_quotes);
+    RUN_TEST(test_cell_cops_long_name);
+
+    std::printf("\n--- Cellular Modem: Registration Parsing ---\n");
+    RUN_TEST(test_cell_reg_home);
+    RUN_TEST(test_cell_reg_roaming);
+    RUN_TEST(test_cell_reg_searching);
+    RUN_TEST(test_cell_reg_denied);
+    RUN_TEST(test_cell_reg_cereg);
+    RUN_TEST(test_cell_reg_invalid);
 
     /* ── Summary ────────────────────────────────────────────────────── */
     std::printf("\n========================================\n");
