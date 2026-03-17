@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Magic Cane Companion</title>
+    <link rel="stylesheet" href="style.css">
+    <meta name="description" content="Web Bluetooth companion for the Magic Cane blind-assist navigation system">
+    <meta name="theme-color" content="#1a73e8">
+</head>
+<body>
+    <!-- Skip navigation for screen readers -->
+    <a href="#main" class="skip-link">Skip to main content</a>
+
+    <header role="banner">
+        <h1>⠍⠁⠛⠊⠉ ⠉⠁⠝⠑ Magic Cane</h1>
+        <p class="subtitle" aria-label="Companion App">Companion App — Smartphone Pairing</p>
+    </header>
+
+    <main id="main" role="main">
+        <!-- Connection Panel -->
+        <section class="card" aria-labelledby="conn-heading">
+            <h2 id="conn-heading">🔗 Connection</h2>
+            <div class="status-row">
+                <span id="status-indicator" class="dot dot-disconnected" aria-hidden="true"></span>
+                <span id="status-text" role="status" aria-live="polite">Disconnected</span>
+            </div>
+            <button id="btn-connect" class="btn btn-primary" aria-label="Connect to Magic Cane via Bluetooth">
+                Connect to Cane
+            </button>
+            <button id="btn-disconnect" class="btn btn-secondary" disabled aria-label="Disconnect from Magic Cane">
+                Disconnect
+            </button>
+        </section>
+
+        <!-- Live Hazard Display -->
+        <section class="card" aria-labelledby="hazard-heading">
+            <h2 id="hazard-heading">🛡️ Live Hazard Map</h2>
+            <div class="belt-display" role="img" aria-label="360 degree hazard map showing obstacle distances in 8 directions">
+                <div class="belt-ring">
+                    <div class="motor" id="motor-0" data-dir="Front" aria-label="Front: clear">0</div>
+                    <div class="motor" id="motor-1" data-dir="Front-Right" aria-label="Front-Right: clear">1</div>
+                    <div class="motor" id="motor-2" data-dir="Right" aria-label="Right: clear">2</div>
+                    <div class="motor" id="motor-3" data-dir="Rear-Right" aria-label="Rear-Right: clear">3</div>
+                    <div class="motor" id="motor-4" data-dir="Rear" aria-label="Rear: clear">4</div>
+                    <div class="motor" id="motor-5" data-dir="Rear-Left" aria-label="Rear-Left: clear">5</div>
+                    <div class="motor" id="motor-6" data-dir="Left" aria-label="Left: clear">6</div>
+                    <div class="motor" id="motor-7" data-dir="Front-Left" aria-label="Front-Left: clear">7</div>
+                    <div class="belt-centre" aria-hidden="true">YOU</div>
+                </div>
+            </div>
+            <div id="estop-banner" class="estop-banner hidden" role="alert" aria-live="assertive">
+                ⚠️ EMERGENCY STOP
+            </div>
+        </section>
+
+        <!-- Advisory Hints -->
+        <section class="card" aria-labelledby="advisory-heading">
+            <h2 id="advisory-heading">💡 Send Advisory Hint</h2>
+            <form id="advisory-form" aria-label="Send navigation hint to cane">
+                <label for="hint-type">Type:</label>
+                <select id="hint-type" aria-label="Hint type">
+                    <option value="nav_hint">Navigation Hint</option>
+                    <option value="scene_label">Scene Label</option>
+                    <option value="ocr_result">OCR Result</option>
+                    <option value="route_update">Route Update</option>
+                </select>
+
+                <label for="hint-bearing">Bearing (°):</label>
+                <input id="hint-bearing" type="number" min="-180" max="180" value="0"
+                       aria-label="Bearing in degrees, -180 to 180">
+
+                <label for="hint-label">Label:</label>
+                <input id="hint-label" type="text" maxlength="63" placeholder="e.g. crosswalk ahead"
+                       aria-label="Description label">
+
+                <label for="hint-confidence">Confidence:</label>
+                <input id="hint-confidence" type="range" min="0" max="100" value="80"
+                       aria-label="Confidence percentage">
+                <span id="confidence-display">80%</span>
+
+                <button type="submit" class="btn btn-primary" id="btn-send-hint" disabled
+                        aria-label="Send advisory hint to cane">
+                    Send Hint
+                </button>
+            </form>
+        </section>
+
+        <!-- Telemetry Log -->
+        <section class="card" aria-labelledby="log-heading">
+            <h2 id="log-heading">📋 Event Log</h2>
+            <div id="log-container" class="log-container" role="log" aria-live="polite" aria-relevant="additions">
+                <p class="log-entry">Ready. Tap "Connect to Cane" to begin.</p>
+            </div>
+            <button id="btn-clear-log" class="btn btn-secondary" aria-label="Clear event log">Clear</button>
+        </section>
+    </main>
+
+    <footer role="contentinfo">
+        <p>Magic Cane © 2024 — Apache-2.0 | <a href="https://github.com/IKNOWINOT/Magic_cane">GitHub</a></p>
+        <p class="braille" aria-label="Magic Cane in Braille">⠍⠁⠛⠊⠉ ⠉⠁⠝⠑</p>
+    </footer>
+
+    <script src="app.js"></script>
+</body>
+</html>

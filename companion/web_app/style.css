@@ -1,0 +1,204 @@
+/*
+ * Magic Cane – Web Bluetooth Companion Styles
+ * Accessible, high-contrast design optimised for low-vision co-use.
+ * Copyright 2024 Magic Cane Contributors – Apache-2.0
+ */
+
+/* ── Reset & Base ───────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+    --bg:       #121212;
+    --surface:  #1e1e1e;
+    --on-bg:    #e0e0e0;
+    --primary:  #1a73e8;
+    --success:  #34a853;
+    --warning:  #fbbc04;
+    --danger:   #ea4335;
+    --clear:    #2d2d2d;
+    --font:     system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+html { font-size: 18px; }
+
+body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--on-bg);
+    line-height: 1.6;
+    padding: 1rem;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+/* ── Accessibility ──────────────────────────────────────────────────── */
+.skip-link {
+    position: absolute;
+    left: -9999px;
+    top: 0;
+    background: var(--primary);
+    color: #fff;
+    padding: 0.5rem 1rem;
+    z-index: 100;
+}
+.skip-link:focus { left: 0; }
+
+:focus-visible {
+    outline: 3px solid var(--primary);
+    outline-offset: 2px;
+}
+
+/* ── Header ─────────────────────────────────────────────────────────── */
+header {
+    text-align: center;
+    padding: 1.5rem 0 1rem;
+}
+header h1 { font-size: 1.6rem; }
+.subtitle { font-size: 0.9rem; opacity: 0.7; }
+
+/* ── Cards ──────────────────────────────────────────────────────────── */
+.card {
+    background: var(--surface);
+    border-radius: 12px;
+    padding: 1.2rem;
+    margin-bottom: 1rem;
+}
+.card h2 { font-size: 1.1rem; margin-bottom: 0.8rem; }
+
+/* ── Status ─────────────────────────────────────────────────────────── */
+.status-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.8rem;
+}
+.dot {
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    display: inline-block;
+}
+.dot-disconnected { background: var(--danger); }
+.dot-scanning     { background: var(--warning); animation: pulse 1s infinite; }
+.dot-connected    { background: var(--success); }
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50%      { opacity: 0.3; }
+}
+
+/* ── Buttons ────────────────────────────────────────────────────────── */
+.btn {
+    display: inline-block;
+    padding: 0.6rem 1.2rem;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    cursor: pointer;
+    margin: 0.3rem 0.3rem 0.3rem 0;
+    transition: opacity 0.2s;
+}
+.btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.btn-primary   { background: var(--primary); color: #fff; }
+.btn-secondary { background: #333; color: var(--on-bg); }
+
+/* ── Belt Display ───────────────────────────────────────────────────── */
+.belt-display {
+    display: flex;
+    justify-content: center;
+    padding: 1rem 0;
+}
+.belt-ring {
+    position: relative;
+    width: 220px; height: 220px;
+}
+.belt-centre {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    font-weight: bold;
+    font-size: 0.8rem;
+    opacity: 0.5;
+}
+.motor {
+    position: absolute;
+    width: 42px; height: 42px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: bold;
+    border: 2px solid #444;
+    transition: background 0.15s, color 0.15s;
+}
+
+/* Motor positions (clock-face layout) */
+#motor-0 { top:   2px; left: 50%; transform: translateX(-50%); }
+#motor-1 { top:  22px; right: 18px; }
+#motor-2 { top:  50%; right: 2px; transform: translateY(-50%); }
+#motor-3 { bottom: 22px; right: 18px; }
+#motor-4 { bottom: 2px; left: 50%; transform: translateX(-50%); }
+#motor-5 { bottom: 22px; left: 18px; }
+#motor-6 { top:  50%; left: 2px; transform: translateY(-50%); }
+#motor-7 { top:  22px; left: 18px; }
+
+.motor-clear { background: var(--clear);   color: #666; }
+.motor-warn  { background: var(--warning); color: #000; }
+.motor-near  { background: #e67e22;        color: #fff; }
+.motor-stop  { background: var(--danger);  color: #fff; animation: flash 0.3s infinite; }
+
+@keyframes flash {
+    0%, 100% { opacity: 1; }
+    50%      { opacity: 0.5; }
+}
+
+/* ── Emergency Stop Banner ──────────────────────────────────────────── */
+.estop-banner {
+    background: var(--danger);
+    color: #fff;
+    text-align: center;
+    padding: 0.8rem;
+    border-radius: 8px;
+    font-weight: bold;
+    font-size: 1.2rem;
+    animation: flash 0.5s infinite;
+}
+.hidden { display: none; }
+
+/* ── Form ───────────────────────────────────────────────────────────── */
+form {
+    display: grid;
+    gap: 0.5rem;
+}
+label { font-size: 0.85rem; opacity: 0.8; }
+input, select {
+    padding: 0.5rem;
+    border-radius: 6px;
+    border: 1px solid #444;
+    background: #2a2a2a;
+    color: var(--on-bg);
+    font-size: 1rem;
+}
+
+/* ── Log ────────────────────────────────────────────────────────────── */
+.log-container {
+    max-height: 200px;
+    overflow-y: auto;
+    font-family: "Courier New", monospace;
+    font-size: 0.75rem;
+    background: #111;
+    padding: 0.5rem;
+    border-radius: 6px;
+    margin-bottom: 0.5rem;
+}
+.log-entry { padding: 0.1rem 0; border-bottom: 1px solid #222; }
+
+/* ── Footer ─────────────────────────────────────────────────────────── */
+footer {
+    text-align: center;
+    padding: 1rem 0;
+    font-size: 0.75rem;
+    opacity: 0.6;
+}
+footer a { color: var(--primary); }
+.braille { font-size: 1.1rem; letter-spacing: 0.15em; margin-top: 0.3rem; }
